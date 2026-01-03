@@ -6,4 +6,5 @@ export default defineConfig({
 	minify: true,
 	platform: 'neutral',
 	sourcemap: process.env.NODE_ENV === 'development',
+	unbundle: true,
 })
