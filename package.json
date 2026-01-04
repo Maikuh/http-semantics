@@ -1,7 +1,7 @@
 {
   "name": "http-semantics",
   "module": "index.ts",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "HTTP Exceptions classes and HTTP Status enums based on RFC 9110, RFC 9457 and RFC 6585.",
   "type": "module",
   "author": "Miguel Araujo",
@@ -21,6 +21,7 @@
   },
   "scripts": {
     "build": "tsdown",
+    "postbuild": "find dist -type f -empty -delete",
     "format": "biome format --write",
     "lint": "biome lint --write",
     "biome": "biome check --write",
