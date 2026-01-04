@@ -4,11 +4,12 @@ import type { ProblemDetails } from '../types/problem-details.type'
  * Defines the base HTTP exception class to be used by named HTTP exceptions.
  */
 export class HttpException extends Error {
-	problemDetails: Partial<ProblemDetails> = {
+	problemDetails: ProblemDetails = {
 		type: 'about:blank',
 		title: 'HTTP Exception',
 		detail: 'An HTTP exception has occurred.',
 		status: 500,
+		instance: '',
 	}
 
 	constructor(problemDetails: ProblemDetails) {

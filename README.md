@@ -25,8 +25,9 @@ $ bun add http-semantics
 
 ## Usage
 ### HTTP Exceptions
-These are classes that extend the base `HttpException` class which is actually extending the global `Error` class, meaning they can be `throw`n. They take a `ProblemDetails` object as their constructor param, with some defaults to the `title`, `detail` and `status` properties. Since `instance` and `type` are meant to be "unique" for each error, these will be required.
+These are classes that extend the base `HttpException` class which is actually extending the global `Error` class; they're meant to be `throw`n. They take a `ProblemDetails` object as their constructor param, with some defaults to the `title`, `detail` and `status` properties. Since `instance` and `type` are meant to be "unique" for each error, these will be required.
 
+#### General idea without framework/library
 ```ts
 import { HttpException, BadRequestException } from 'http-semantics'
 
@@ -51,9 +52,56 @@ try {
 }
 ```
 
+#### Express.js
+```ts
+import { HttpException } from 'http-semantics'
+
+// Catch all error handler
+app.use((err, req, res, next) => {
+    if (err instanceof HttpException) {
+        res.status(err.problemDetails.status).json(err.problemDetails)
+        return
+    }
+
+    next(err)
+})
+```
+
+#### Fastify
+```ts
+import { HttpException } from 'http-semantics'
+
+// Register parent error handler
+fastify.setErrorHandler((error, request, reply) => {
+    req.log.error(err)
+
+    if (err instanceof HttpException) {
+        return res.code(err.problemDetails.status).send(err.problemDetails)
+    }
+
+    // Default behavior
+    reply.status(500).send('Internal Server Error')
+})
+```
+
+#### Hono
+```ts
+import { HttpException, HttpStatus } from 'http-semantics'
+
+app.onError((err, c) => {
+	console.error(`${err}`)
+
+	if (err instanceof HttpException) {
+		return c.json(err.problemDetails, err.problemDetails.status as ContentfulStatusCode)
+	}
+
+	return c.json({ message: 'Internal Server Error' }, HttpStatus.INTERNAL_SERVER_ERROR)
+})
+```
+
 ### Enums
 ```ts
-import type { HttpStatus, HttpStatusPhrase } from 'http-semantics'
+import { HttpStatus, HttpStatusPhrase } from 'http-semantics'
 
 HttpStatus.NOT_FOUND // 200
 HttpStatusPhrase.NOT_FOUND // "Not Found"
