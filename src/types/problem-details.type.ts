@@ -33,8 +33,7 @@ export type ProblemDetails = {
 	[key: string]: unknown
 }
 
-export type ProblemDetailsPartial = ProblemDetails & {
-	title?: string
-	status?: HttpStatusCode
-	detail?: string
+export type ProblemDetailsWithSomeDefaults = Partial<ProblemDetails> & {
+	type: string
+	instance: string
 }

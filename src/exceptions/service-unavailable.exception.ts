@@ -1,10 +1,10 @@
 import { HttpStatus } from '../enums/http-status.enum'
 import { HttpStatusPhrase } from '../enums/http-status-phrase.enum'
-import type { ProblemDetailsPartial } from '../types/problem-details.type'
+import type { ProblemDetailsWithSomeDefaults } from '../types/problem-details.type'
 import { HttpException } from './http.exception'
 
 export class ServiceUnavailableException extends HttpException {
-	constructor({ type, title, detail, instance, ...rest }: ProblemDetailsPartial) {
+	constructor({ type, title, detail, instance, ...rest }: ProblemDetailsWithSomeDefaults) {
 		super({
 			...rest,
 			type,
