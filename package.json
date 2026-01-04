@@ -37,5 +37,9 @@
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Maikuh/http-semantics.git"
   }
 }
