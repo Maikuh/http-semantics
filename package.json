@@ -41,5 +41,21 @@
   "repository": {
     "type": "git",
     "url": "git@github.com:Maikuh/http-semantics.git"
-  }
+  },
+  "keywords": [
+    "http",
+    "semantics",
+    "http semantics",
+    "rfc",
+    "api",
+    "rest",
+    "restful",
+    "rest api",
+    "exception",
+    "exceptions",
+    "http exception",
+    "http exceptions",
+    "problem details",
+    "status"
+  ]
 }
