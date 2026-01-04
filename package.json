@@ -2,7 +2,7 @@
   "name": "http-semantics",
   "module": "index.ts",
   "version": "0.1.1",
-  "description": "HTTP Exceptions classes and HTTP Status enums based on RFC 9110, RFC 9457 and RFC 6585.",
+  "description": "HTTP exceptions and status codes based on RFC 9110, RFC 9457 and RFC 6585 to aid in building RESTful APIs.",
   "type": "module",
   "author": "Miguel Araujo",
   "license": "MIT",
