@@ -1,6 +1,13 @@
 # http-semantics
 
-Typescript library designed to help in HTTP APIs creation by providing exceptions classes and 
+<a href="https://www.npmjs.com/package/http-semantics" target="_blank"><img src="https://badgen.net/npm/v/http-semantics"></a>
+<a href="https://www.npmjs.com/package/http-semantics" target="_blank"><img src="https://badgen.net/npm/dm/http-semantics"></a>
+<a href="https://www.npmjs.com/package/http-semantics" target="_blank"><img src="https://badgen.net/npm/types/http-semantics"></a>
+<a href="https://bundlephobia.com/package/http-semantics" target="_blank"><img src="https://badgen.net/bundlephobia/minzip/http-semantics"></a>
+![Release and NPM Publish Action](https://github.com/Maikuh/http-semantics/actions/workflows/release-and-publish.yml/badge.svg)
+<a href="LICENSE" target="_blank"><img src="https://badgen.net/static/license/MIT/green"></a>
+
+Typescript library designed to help in HTTP APIs creation by providing exceptions classes (for 400 and 500 status codes) and 
 status codes / phrases enums based on the following RFCs:
 - [RFC 9110](https://datatracker.ietf.org/doc/html/rfc9110) (HTTP Semantics - Standard)
 - [RFC 9457](https://datatracker.ietf.org/doc/html/rfc9457) (Problem Details for HTTP APIs - Standard)
@@ -11,7 +18,7 @@ status codes / phrases enums based on the following RFCs:
 
 ```bash
 # Using NPM
-$ bun add http-semantics
+$ npm i http-semantics
 
 # Using Yarn
 $ yarn add http-semantics
