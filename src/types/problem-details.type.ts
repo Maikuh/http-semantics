@@ -1,10 +1,13 @@
 import type { HttpStatusCode } from './http-status-code.type'
 
-export type ProblemDetails = {
+/**
+ * Base fields defined by RFC 9457 (Problem Details for HTTP APIs).
+ */
+type ProblemDetailsBase = {
 	/**
 	 * A URI reference that identifies the problem type. It's intended to provide human operators
 	 * with a place to find more information about the error. If not present or applicable,
-	 * it’s assumed to be “about:blank”.
+	 * it's assumed to be "about:blank".
 	 */
 	type: string
 	/**
@@ -26,14 +29,29 @@ export type ProblemDetails = {
 	 * It may or may not yield further information if dereferenced.
 	 */
 	instance: string
-
-	/**
-	 * An optional object containing additional properties to provide more context about the problem.
-	 */
-	[key: string]: unknown
 }
 
-export type ProblemDetailsWithSomeDefaults = Partial<ProblemDetails> & {
+/**
+ * RFC 9457 Problem Details object.
+ *
+ * The generic parameter `TExtensions` allows you to type additional RFC "extension members"
+ * alongside the standard fields:
+ *
+ * @example
+ * ```ts
+ * type ValidationProblem = ProblemDetails<{ errors: { field: string; message: string }[] }>
+ * ```
+ */
+export type ProblemDetails<TExtensions extends Record<string, unknown> = Record<string, unknown>> =
+	ProblemDetailsBase & TExtensions
+
+/**
+ * Used by named exception constructors. `type` and `instance` are required because they are
+ * intended to be unique per problem occurrence; all other fields have sensible defaults.
+ */
+export type ProblemDetailsWithSomeDefaults<
+	TExtensions extends Record<string, unknown> = Record<string, unknown>,
+> = Partial<ProblemDetails<TExtensions>> & {
 	type: string
 	instance: string
 }

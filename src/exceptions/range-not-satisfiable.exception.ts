@@ -13,6 +13,5 @@ export class RangeNotSatisfiableException extends HttpException {
 			status: HttpStatus.RANGE_NOT_SATISFIABLE,
 			instance,
 		})
-		this.name = 'RangeNotSatisfiableException'
 	}
 }

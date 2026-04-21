@@ -15,6 +15,5 @@ export class LengthRequiredException extends HttpException {
 			status: HttpStatus.LENGTH_REQUIRED,
 			instance,
 		})
-		this.name = 'LengthRequiredException'
 	}
 }

@@ -13,6 +13,5 @@ export class MethodNotAllowedException extends HttpException {
 			status: HttpStatus.METHOD_NOT_ALLOWED,
 			instance,
 		})
-		this.name = 'MethodNotAllowedException'
 	}
 }

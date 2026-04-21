@@ -13,6 +13,5 @@ export class UnauthorizedException extends HttpException {
 			status: HttpStatus.UNAUTHORIZED,
 			instance,
 		})
-		this.name = 'UnauthorizedException'
 	}
 }

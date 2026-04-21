@@ -13,6 +13,5 @@ export class TooManyRequestsException extends HttpException {
 			status: HttpStatus.TOO_MANY_REQUESTS,
 			instance,
 		})
-		this.name = 'TooManyRequestsException'
 	}
 }

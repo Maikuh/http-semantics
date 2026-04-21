@@ -15,6 +15,5 @@ export class MisdirectedRequestException extends HttpException {
 			status: HttpStatus.MISDIRECTED_REQUEST,
 			instance,
 		})
-		this.name = 'MisdirectedRequestException'
 	}
 }

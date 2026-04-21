@@ -15,6 +15,5 @@ export class GatewayTimeoutException extends HttpException {
 			status: HttpStatus.GATEWAY_TIMEOUT,
 			instance,
 		})
-		this.name = 'GatewayTimeoutException'
 	}
 }

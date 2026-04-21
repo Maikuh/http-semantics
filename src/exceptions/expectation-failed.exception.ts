@@ -14,6 +14,5 @@ export class ExpectationFailedException extends HttpException {
 			status: HttpStatus.EXPECTATION_FAILED,
 			instance,
 		})
-		this.name = 'ExpectationFailedException'
 	}
 }

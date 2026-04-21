@@ -13,6 +13,5 @@ export class PreconditionFailedException extends HttpException {
 			status: HttpStatus.PRECONDITION_FAILED,
 			instance,
 		})
-		this.name = 'PreconditionFailedException'
 	}
 }

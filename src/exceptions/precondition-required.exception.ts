@@ -13,6 +13,5 @@ export class PreconditionRequiredException extends HttpException {
 			status: HttpStatus.PRECONDITION_REQUIRED,
 			instance,
 		})
-		this.name = 'PreconditionRequiredException'
 	}
 }

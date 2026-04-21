@@ -15,6 +15,5 @@ export class UpgradeRequiredException extends HttpException {
 			status: HttpStatus.UPGRADE_REQUIRED,
 			instance,
 		})
-		this.name = 'UpgradeRequiredException'
 	}
 }

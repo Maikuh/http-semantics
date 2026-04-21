@@ -14,6 +14,5 @@ export class NotImplementedException extends HttpException {
 			status: HttpStatus.NOT_IMPLEMENTED,
 			instance,
 		})
-		this.name = 'NotImplementedException'
 	}
 }

@@ -175,6 +175,12 @@ export enum HttpStatus {
 	NOT_ACCEPTABLE = 406,
 
 	/**
+	 * The 407 (Proxy Authentication Required) status code indicates that the client needs
+	 * to authenticate itself in order to use a proxy for this request.
+	 */
+	PROXY_AUTHENTICATION_REQUIRED = 407,
+
+	/**
 	 * The 408 (Request Timeout) status code indicates that the server did not
 	 * receive a complete request message within the time it was prepared to wait.
 	 */
@@ -272,6 +278,14 @@ export enum HttpStatus {
 	 */
 	REQUEST_HEADER_FIELDS_TOO_LARGE = 431,
 
+	/**
+	 * The 451 (Unavailable For Legal Reasons) status code indicates that the server
+	 * is denying access to the resource as a consequence of a legal demand.
+	 *
+	 * @see https://www.rfc-editor.org/rfc/rfc7725
+	 */
+	UNAVAILABLE_FOR_LEGAL_REASONS = 451,
+
 	/* =========================
 	 * 5xx — Server Error
 	 * ========================= */
@@ -313,6 +327,14 @@ export enum HttpStatus {
 	 * does not support the HTTP protocol version used in the request.
 	 */
 	HTTP_VERSION_NOT_SUPPORTED = 505,
+
+	/**
+	 * The 511 (Network Authentication Required) status code indicates that the client
+	 * needs to authenticate to gain network access.
+	 *
+	 * @see https://www.rfc-editor.org/rfc/rfc6585#section-6
+	 */
+	NETWORK_AUTHENTICATION_REQUIRED = 511,
 }
 
 export type HttpStatusName = keyof typeof HttpStatus

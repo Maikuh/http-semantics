@@ -13,6 +13,5 @@ export class RequestHeaderFieldsTooLargeException extends HttpException {
 			status: HttpStatus.REQUEST_HEADER_FIELDS_TOO_LARGE,
 			instance,
 		})
-		this.name = 'RequestHeaderFieldsTooLargeException'
 	}
 }

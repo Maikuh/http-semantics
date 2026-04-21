@@ -13,6 +13,5 @@ export class NotFoundException extends HttpException {
 			status: HttpStatus.NOT_FOUND,
 			instance,
 		})
-		this.name = 'NotFoundException'
 	}
 }

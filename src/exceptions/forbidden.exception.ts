@@ -13,6 +13,5 @@ export class ForbiddenException extends HttpException {
 			status: HttpStatus.FORBIDDEN,
 			instance,
 		})
-		this.name = 'ForbiddenException'
 	}
 }

@@ -33,6 +33,7 @@ export enum HttpStatusPhrase {
 	METHOD_NOT_ALLOWED = 'Method Not Allowed',
 	NOT_ACCEPTABLE = 'Not Acceptable',
 	REQUEST_TIMEOUT = 'Request Timeout',
+	PROXY_AUTHENTICATION_REQUIRED = 'Proxy Authentication Required',
 	CONFLICT = 'Conflict',
 	GONE = 'Gone',
 	LENGTH_REQUIRED = 'Length Required',
@@ -48,6 +49,7 @@ export enum HttpStatusPhrase {
 	PRECONDITION_REQUIRED = 'Precondition Required',
 	TOO_MANY_REQUESTS = 'Too Many Requests',
 	REQUEST_HEADER_FIELDS_TOO_LARGE = 'Request Header Fields Too Large',
+	UNAVAILABLE_FOR_LEGAL_REASONS = 'Unavailable For Legal Reasons',
 
 	// 5xx Server Errors
 	INTERNAL_SERVER_ERROR = 'Internal Server Error',
@@ -56,4 +58,5 @@ export enum HttpStatusPhrase {
 	SERVICE_UNAVAILABLE = 'Service Unavailable',
 	GATEWAY_TIMEOUT = 'Gateway Timeout',
 	HTTP_VERSION_NOT_SUPPORTED = 'HTTP Version Not Supported',
+	NETWORK_AUTHENTICATION_REQUIRED = 'Network Authentication Required',
 }

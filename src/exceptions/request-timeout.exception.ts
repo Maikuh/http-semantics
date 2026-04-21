@@ -15,6 +15,5 @@ export class RequestTimeoutException extends HttpException {
 			status: HttpStatus.REQUEST_TIMEOUT,
 			instance,
 		})
-		this.name = 'RequestTimeoutException'
 	}
 }

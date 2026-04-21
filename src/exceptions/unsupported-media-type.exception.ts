@@ -14,6 +14,5 @@ export class UnsupportedMediaTypeException extends HttpException {
 			status: HttpStatus.UNSUPPORTED_MEDIA_TYPE,
 			instance,
 		})
-		this.name = 'UnsupportedMediaTypeException'
 	}
 }

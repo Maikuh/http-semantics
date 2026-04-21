@@ -15,6 +15,5 @@ export class UnprocessableContentException extends HttpException {
 			status: HttpStatus.UNPROCESSABLE_CONTENT,
 			instance,
 		})
-		this.name = 'UnprocessableContentException'
 	}
 }

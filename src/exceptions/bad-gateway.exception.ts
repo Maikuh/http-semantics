@@ -15,6 +15,5 @@ export class BadGatewayException extends HttpException {
 			status: HttpStatus.BAD_GATEWAY,
 			instance,
 		})
-		this.name = 'BadGatewayException'
 	}
 }

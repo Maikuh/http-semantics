@@ -14,6 +14,5 @@ export class ContentTooLargeException extends HttpException {
 			status: HttpStatus.CONTENT_TOO_LARGE,
 			instance,
 		})
-		this.name = 'ContentTooLargeException'
 	}
 }

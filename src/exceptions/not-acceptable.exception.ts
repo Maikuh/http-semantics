@@ -15,6 +15,5 @@ export class NotAcceptableException extends HttpException {
 			status: HttpStatus.NOT_ACCEPTABLE,
 			instance,
 		})
-		this.name = 'NotAcceptableException'
 	}
 }

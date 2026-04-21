@@ -15,6 +15,5 @@ export class InternalServerErrorException extends HttpException {
 			status: HttpStatus.INTERNAL_SERVER_ERROR,
 			instance,
 		})
-		this.name = 'InternalServerErrorException'
 	}
 }

@@ -15,6 +15,5 @@ export class GoneException extends HttpException {
 			status: HttpStatus.GONE,
 			instance,
 		})
-		this.name = 'GoneException'
 	}
 }

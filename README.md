@@ -80,10 +80,10 @@ import { HttpException } from 'http-semantics'
 
 // Register parent error handler
 fastify.setErrorHandler((error, request, reply) => {
-    req.log.error(err)
+    request.log.error(error)
 
-    if (err instanceof HttpException) {
-        return res.code(err.problemDetails.status).send(err.problemDetails)
+    if (error instanceof HttpException) {
+        return reply.code(error.problemDetails.status).send(error.problemDetails)
     }
 
     // Default behavior
@@ -110,7 +110,7 @@ app.onError((err, c) => {
 ```ts
 import { HttpStatus, HttpStatusPhrase } from 'http-semantics'
 
-HttpStatus.NOT_FOUND // 200
+HttpStatus.NOT_FOUND // 404
 HttpStatusPhrase.NOT_FOUND // "Not Found"
 ```
 

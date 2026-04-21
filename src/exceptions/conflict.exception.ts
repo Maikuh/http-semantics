@@ -15,6 +15,5 @@ export class ConflictException extends HttpException {
 			status: HttpStatus.CONFLICT,
 			instance,
 		})
-		this.name = 'ConflictException'
 	}
 }

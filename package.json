@@ -15,13 +15,20 @@
   ],
   "exports": {
     ".": {
-      "default": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
     }
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
   },
   "scripts": {
     "build": "tsdown",
     "postbuild": "find dist -type f -empty -delete",
+    "test": "bun test",
     "format": "biome format --write",
     "lint": "biome lint --write",
     "biome": "biome check --write",

@@ -13,6 +13,5 @@ export class HttpVersionNotSupportedException extends HttpException {
 			status: HttpStatus.HTTP_VERSION_NOT_SUPPORTED,
 			instance,
 		})
-		this.name = 'HttpVersionNotSupportedException'
 	}
 }

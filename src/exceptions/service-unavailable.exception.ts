@@ -15,6 +15,5 @@ export class ServiceUnavailableException extends HttpException {
 			status: HttpStatus.SERVICE_UNAVAILABLE,
 			instance,
 		})
-		this.name = 'ServiceUnavailableException'
 	}
 }
