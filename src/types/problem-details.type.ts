@@ -47,11 +47,21 @@ export type ProblemDetails<TExtensions extends Record<string, unknown> = Record<
 
 /**
  * Used by named exception constructors. `type` and `instance` are required because they are
- * intended to be unique per problem occurrence; all other fields have sensible defaults.
+ * intended to be unique per problem occurrence; `title` and `detail` have sensible defaults and
+ * `status` is always set by the exception class itself.
+ *
+ * Extension members declared through `TExtensions` keep their own optionality.
  */
 export type ProblemDetailsWithSomeDefaults<
 	TExtensions extends Record<string, unknown> = Record<string, unknown>,
-> = Partial<ProblemDetails<TExtensions>> & {
-	type: string
-	instance: string
+> = Pick<ProblemDetailsBase, 'type' | 'instance'> &
+	Partial<Pick<ProblemDetailsBase, 'title' | 'detail'>> &
+	TExtensions
+
+/**
+ * Options accepted by every `HttpException` constructor (mirrors the native `ErrorOptions`).
+ */
+export type HttpExceptionOptions = {
+	/** The underlying error that caused this exception, exposed as `error.cause`. */
+	cause?: unknown
 }

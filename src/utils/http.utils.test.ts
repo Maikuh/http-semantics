@@ -1,9 +1,12 @@
 import { describe, expect, test } from 'bun:test'
+
 import { InternalServerErrorException } from '../exceptions/internal-server-error.exception'
 import { NotFoundException } from '../exceptions/not-found.exception'
 import {
 	getProblemDetails,
+	getStatusPhrase,
 	isClientError,
+	isHttpStatusCode,
 	isHttpException,
 	isInformational,
 	isRedirect,
@@ -54,4 +57,18 @@ describe('getProblemDetails', () => {
 	})
 	test('returns undefined for plain Error', () =>
 		expect(getProblemDetails(new Error('oops'))).toBeUndefined())
+})
+
+describe('getStatusPhrase', () => {
+	test('returns the phrase for a known code', () =>
+		expect<string | undefined>(getStatusPhrase(404)).toBe('Not Found'))
+	test('returns the phrase for 414', () =>
+		expect<string | undefined>(getStatusPhrase(414)).toBe('URI Too Long'))
+	test('returns undefined for an unknown code', () => expect(getStatusPhrase(999)).toBeUndefined())
+})
+
+describe('isHttpStatusCode', () => {
+	test('accepts known codes', () => expect(isHttpStatusCode(429)).toBe(true))
+	test('rejects unknown codes', () => expect(isHttpStatusCode(499)).toBe(false))
+	test('rejects non-numbers', () => expect(isHttpStatusCode('404')).toBe(false))
 })

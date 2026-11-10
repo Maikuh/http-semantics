@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
-import { HttpStatus } from './http-status.enum'
+
 import { HttpStatusPhrase } from './http-status-phrase.enum'
+import { HttpStatus } from './http-status.enum'
 
 describe('HttpStatus', () => {
 	test('OK is 200', () => expect(HttpStatus.OK).toBe(200))
@@ -15,6 +16,16 @@ describe('HttpStatus', () => {
 })
 
 describe('HttpStatusPhrase', () => {
-	test('OK is "OK"', () => expect(HttpStatusPhrase.OK).toBe('OK'))
-	test('NOT_FOUND is "Not Found"', () => expect(HttpStatusPhrase.NOT_FOUND).toBe('Not Found'))
+	test('OK is "OK"', () => expect<string>(HttpStatusPhrase.OK).toBe('OK'))
+	test('NOT_FOUND is "Not Found"', () =>
+		expect<string>(HttpStatusPhrase.NOT_FOUND).toBe('Not Found'))
+	test('URI_TOO_LONG is "URI Too Long"', () =>
+		expect<string>(HttpStatusPhrase.URI_TOO_LONG).toBe('URI Too Long'))
+})
+
+describe('HttpStatus / HttpStatusPhrase parity', () => {
+	test('both enums declare exactly the same keys', () => {
+		const statusKeys = Object.keys(HttpStatus).filter((k) => Number.isNaN(Number(k)))
+		expect(statusKeys.toSorted()).toEqual(Object.keys(HttpStatusPhrase).toSorted())
+	})
 })

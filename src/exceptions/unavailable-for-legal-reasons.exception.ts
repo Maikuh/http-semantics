@@ -1,19 +1,35 @@
-import { HttpStatus } from '../enums/http-status.enum'
 import { HttpStatusPhrase } from '../enums/http-status-phrase.enum'
-import type { ProblemDetailsWithSomeDefaults } from '../types/problem-details.type'
+import { HttpStatus } from '../enums/http-status.enum'
+import type {
+	HttpExceptionOptions,
+	ProblemDetailsWithSomeDefaults,
+} from '../types/problem-details.type'
 import { HttpException } from './http.exception'
+import { buildProblemDetails } from './problem-details.builder'
 
-export class UnavailableForLegalReasonsException extends HttpException {
-	constructor({ type, title, detail, instance, ...rest }: ProblemDetailsWithSomeDefaults) {
-		super({
-			...rest,
-			type,
-			title: title || HttpStatusPhrase.UNAVAILABLE_FOR_LEGAL_REASONS,
-			detail:
-				detail ??
+/**
+ * 451 Unavailable For Legal Reasons
+ *
+ * @see https://www.rfc-editor.org/rfc/rfc7725#section-3
+ */
+export class UnavailableForLegalReasonsException<
+	TExtensions extends Record<string, unknown> = Record<string, unknown>,
+> extends HttpException<TExtensions> {
+	// Explicit so the name survives minifiers that rename classes.
+	override name: string = 'UnavailableForLegalReasonsException'
+
+	constructor(
+		problemDetails: ProblemDetailsWithSomeDefaults<TExtensions>,
+		options?: HttpExceptionOptions,
+	) {
+		super(
+			buildProblemDetails(
+				problemDetails,
+				HttpStatus.UNAVAILABLE_FOR_LEGAL_REASONS,
+				HttpStatusPhrase.UNAVAILABLE_FOR_LEGAL_REASONS,
 				'The server is denying access to the resource as a consequence of a legal demand.',
-			status: HttpStatus.UNAVAILABLE_FOR_LEGAL_REASONS,
-			instance,
-		})
+			),
+			options,
+		)
 	}
 }

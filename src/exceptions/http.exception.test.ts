@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test'
+
 import { HttpException } from './http.exception'
 import { NotFoundException } from './not-found.exception'
 
@@ -18,7 +19,7 @@ describe('HttpException', () => {
 		})
 		expect(ex.problemDetails.type).toBe(baseInput.type)
 		expect(ex.problemDetails.instance).toBe(baseInput.instance)
-		expect(ex.problemDetails.status).toBe(400)
+		expect<number>(ex.problemDetails.status).toBe(400)
 		expect(ex.problemDetails.title).toBe('Bad Request')
 		expect(ex.problemDetails.detail).toBe('Something was wrong.')
 	})
@@ -61,7 +62,7 @@ describe('HttpException', () => {
 			{ ...baseInput, status: 500, title: 'T', detail: 'D' },
 			{ cause: rootCause },
 		)
-		expect((ex as Error & { cause: unknown }).cause).toBe(rootCause)
+		expect(ex.cause).toBe(rootCause)
 	})
 
 	test('subclass instanceof checks work', () => {
@@ -69,5 +70,12 @@ describe('HttpException', () => {
 		expect(ex).toBeInstanceOf(HttpException)
 		expect(ex).toBeInstanceOf(NotFoundException)
 		expect(ex).toBeInstanceOf(Error)
+	})
+
+	test('does not share state with the input object', () => {
+		const input = { ...baseInput, status: 500 as const, title: 'T', detail: 'D' }
+		const ex = new HttpException(input)
+		input.title = 'Mutated'
+		expect(ex.problemDetails.title).toBe('T')
 	})
 })

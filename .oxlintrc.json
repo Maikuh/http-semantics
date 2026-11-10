@@ -1,0 +1,39 @@
+{
+	"$schema": "./node_modules/oxlint/configuration_schema.json",
+	"plugins": ["typescript", "unicorn", "oxc", "import"],
+	"options": {
+		"typeAware": true
+	},
+	"categories": {
+		"correctness": "error",
+		"suspicious": "warn",
+		"perf": "warn"
+	},
+	"rules": {
+		"typescript/no-floating-promises": "error",
+		"typescript/consistent-type-imports": "error",
+		"typescript/no-explicit-any": "error",
+		"import/no-cycle": "error",
+		"no-unused-vars": [
+			"error",
+			{
+				"varsIgnorePattern": "^_",
+				"argsIgnorePattern": "^_"
+			}
+		],
+		"typescript/no-unsafe-type-assertion": "off"
+	},
+	"env": {
+		"builtin": true
+	},
+	"ignorePatterns": ["dist"],
+	"overrides": [
+		{
+			"files": ["**/*.test.ts"],
+			"rules": {
+				"typescript/no-unsafe-enum-assignment": "off",
+				"typescript/no-unsafe-enum-comparison": "off"
+			}
+		}
+	]
+}

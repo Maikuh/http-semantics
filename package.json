@@ -1,68 +1,76 @@
 {
-  "name": "http-semantics",
-  "module": "index.ts",
-  "version": "0.2.0",
-  "description": "HTTP exceptions and status codes based on RFC 9110, RFC 9457 and RFC 6585 to aid in building RESTful APIs.",
-  "type": "module",
-  "author": "Miguel Araujo",
-  "license": "MIT",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist/**/*",
-    "LICENSE",
-    "README.md"
-  ],
-  "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      }
-    }
-  },
-  "sideEffects": false,
-  "engines": {
-    "node": ">=18"
-  },
-  "scripts": {
-    "build": "tsdown",
-    "postbuild": "find dist -type f -empty -delete",
-    "test": "bun test",
-    "format": "biome format --write",
-    "lint": "biome lint --write",
-    "biome": "biome check --write",
-    "biome:ci": "biome ci",
-    "preversion": "bun run lint",
-    "prepublishOnly": "bun biome:ci && bun run build",
-    "postversion": "git push --follow-tags"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "2.3.11",
-    "@types/bun": "latest",
-    "tsdown": "^0.18.4"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:Maikuh/http-semantics.git"
-  },
-  "keywords": [
-    "http",
-    "semantics",
-    "http semantics",
-    "rfc",
-    "api",
-    "rest",
-    "restful",
-    "rest api",
-    "exception",
-    "exceptions",
-    "http exception",
-    "http exceptions",
-    "problem details",
-    "status"
-  ]
+	"name": "http-semantics",
+	"version": "0.2.0",
+	"description": "HTTP exceptions and status codes based on RFC 9110, RFC 9457 and RFC 6585 to aid in building RESTful APIs.",
+	"keywords": [
+		"http",
+		"semantics",
+		"http semantics",
+		"rfc",
+		"api",
+		"rest",
+		"restful",
+		"rest api",
+		"exception",
+		"exceptions",
+		"http exception",
+		"http exceptions",
+		"problem details",
+		"status"
+	],
+	"homepage": "https://github.com/Maikuh/http-semantics#readme",
+	"bugs": {
+		"url": "https://github.com/Maikuh/http-semantics/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Maikuh/http-semantics.git"
+	},
+	"license": "MIT",
+	"author": "Miguel Araujo",
+	"type": "module",
+	"sideEffects": false,
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"dist/**/*",
+		"LICENSE",
+		"README.md"
+	],
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"build": "tsdown",
+		"postbuild": "find dist -type f -empty -delete",
+		"test": "bun test",
+		"typecheck": "tsc",
+		"lint": "oxlint",
+		"lint:fix": "oxlint --fix",
+		"format": "oxfmt",
+		"format:check": "oxfmt --check",
+		"check": "bun run format:check && bun run lint && bun run typecheck && bun test",
+		"preversion": "bun run check",
+		"prepublishOnly": "bun run check && bun run build",
+		"postversion": "git push --follow-tags"
+	},
+	"devDependencies": {
+		"@types/bun": "^1.4.4",
+		"@types/express": "^5",
+		"express": "^5.3",
+		"fastify": "^5.12",
+		"hono": "^4.13",
+		"oxfmt": "^0.77.0",
+		"oxlint": "^1.92.0",
+		"oxlint-tsgolint": "^7.0.2006",
+		"tsdown": "^0.23.7",
+		"typescript": "^7.0.2"
+	}
 }

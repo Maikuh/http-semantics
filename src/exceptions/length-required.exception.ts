@@ -1,19 +1,35 @@
-import { HttpStatus } from '../enums/http-status.enum'
 import { HttpStatusPhrase } from '../enums/http-status-phrase.enum'
-import type { ProblemDetailsWithSomeDefaults } from '../types/problem-details.type'
+import { HttpStatus } from '../enums/http-status.enum'
+import type {
+	HttpExceptionOptions,
+	ProblemDetailsWithSomeDefaults,
+} from '../types/problem-details.type'
 import { HttpException } from './http.exception'
+import { buildProblemDetails } from './problem-details.builder'
 
-export class LengthRequiredException extends HttpException {
-	constructor({ type, title, detail, instance, ...rest }: ProblemDetailsWithSomeDefaults) {
-		super({
-			...rest,
-			type,
-			title: title || HttpStatusPhrase.LENGTH_REQUIRED,
-			detail:
-				detail ??
+/**
+ * 411 Length Required
+ *
+ * @see https://www.rfc-editor.org/rfc/rfc9110#section-15.5.12
+ */
+export class LengthRequiredException<
+	TExtensions extends Record<string, unknown> = Record<string, unknown>,
+> extends HttpException<TExtensions> {
+	// Explicit so the name survives minifiers that rename classes.
+	override name: string = 'LengthRequiredException'
+
+	constructor(
+		problemDetails: ProblemDetailsWithSomeDefaults<TExtensions>,
+		options?: HttpExceptionOptions,
+	) {
+		super(
+			buildProblemDetails(
+				problemDetails,
+				HttpStatus.LENGTH_REQUIRED,
+				HttpStatusPhrase.LENGTH_REQUIRED,
 				'The request did not specify the length of its content, which is required by the resource.',
-			status: HttpStatus.LENGTH_REQUIRED,
-			instance,
-		})
+			),
+			options,
+		)
 	}
 }

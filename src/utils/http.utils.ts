@@ -1,4 +1,7 @@
+import { HttpStatusPhrase } from '../enums/http-status-phrase.enum'
+import { HttpStatus } from '../enums/http-status.enum'
 import { HttpException } from '../exceptions/http.exception'
+import type { HttpStatusCode } from '../types/http-status-code.type'
 import type { ProblemDetails } from '../types/problem-details.type'
 
 /**
@@ -66,4 +69,32 @@ export function isRedirect(status: number): boolean {
  */
 export function getProblemDetails(error: unknown): ProblemDetails | undefined {
 	return isHttpException(error) ? error.problemDetails : undefined
+}
+
+/**
+ * Returns the RFC 9110 reason phrase for a status code, or `undefined` if the code is unknown.
+ *
+ * @example
+ * ```ts
+ * getStatusPhrase(404) // 'Not Found'
+ * getStatusPhrase(999) // undefined
+ * ```
+ */
+export function getStatusPhrase(status: number): HttpStatusPhrase | undefined {
+	if (!isHttpStatusCode(status)) return undefined
+	return HttpStatusPhrase[HttpStatus[status] as keyof typeof HttpStatusPhrase]
+}
+
+/**
+ * Type guard — narrows a value to one of the status codes known by this library
+ * (see `HttpStatus`).
+ *
+ * @example
+ * ```ts
+ * isHttpStatusCode(404) // true
+ * isHttpStatusCode(499) // false
+ * ```
+ */
+export function isHttpStatusCode(value: unknown): value is HttpStatusCode {
+	return typeof value === 'number' && typeof HttpStatus[value] === 'string'
 }

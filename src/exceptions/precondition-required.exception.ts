@@ -1,17 +1,35 @@
-import { HttpStatus } from '../enums/http-status.enum'
 import { HttpStatusPhrase } from '../enums/http-status-phrase.enum'
-import type { ProblemDetailsWithSomeDefaults } from '../types/problem-details.type'
+import { HttpStatus } from '../enums/http-status.enum'
+import type {
+	HttpExceptionOptions,
+	ProblemDetailsWithSomeDefaults,
+} from '../types/problem-details.type'
 import { HttpException } from './http.exception'
+import { buildProblemDetails } from './problem-details.builder'
 
-export class PreconditionRequiredException extends HttpException {
-	constructor({ type, title, detail, instance, ...rest }: ProblemDetailsWithSomeDefaults) {
-		super({
-			...rest,
-			type,
-			title: title || HttpStatusPhrase.PRECONDITION_REQUIRED,
-			detail: detail ?? 'The server requires the request to be conditional.',
-			status: HttpStatus.PRECONDITION_REQUIRED,
-			instance,
-		})
+/**
+ * 428 Precondition Required
+ *
+ * @see https://www.rfc-editor.org/rfc/rfc6585#section-3
+ */
+export class PreconditionRequiredException<
+	TExtensions extends Record<string, unknown> = Record<string, unknown>,
+> extends HttpException<TExtensions> {
+	// Explicit so the name survives minifiers that rename classes.
+	override name: string = 'PreconditionRequiredException'
+
+	constructor(
+		problemDetails: ProblemDetailsWithSomeDefaults<TExtensions>,
+		options?: HttpExceptionOptions,
+	) {
+		super(
+			buildProblemDetails(
+				problemDetails,
+				HttpStatus.PRECONDITION_REQUIRED,
+				HttpStatusPhrase.PRECONDITION_REQUIRED,
+				'The server requires the request to be conditional.',
+			),
+			options,
+		)
 	}
 }

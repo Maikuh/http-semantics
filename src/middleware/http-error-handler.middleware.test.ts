@@ -1,4 +1,12 @@
-import { describe, expect, test } from 'bun:test'
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
+import type { Server } from 'node:http'
+import type { AddressInfo } from 'node:net'
+
+import express from 'express'
+import Fastify from 'fastify'
+import { Hono } from 'hono'
+import { basicAuth } from 'hono/basic-auth'
+
 import { NotFoundException } from '../exceptions/not-found.exception'
 import { PROBLEM_JSON_CONTENT_TYPE } from '../types/problem-json.constant'
 import {
@@ -12,145 +20,136 @@ const baseInput = {
 	instance: '/errors/abc-123',
 } as const
 
-// ─── Shared mock types ────────────────────────────────────────────────────────
+const silentLogger = { level: 'silent' } as const
 
-type MockReply = {
-	code: (c: number) => MockReply
-	header: (name: string, value: string) => MockReply
-	send: (b: unknown) => void
-}
-
-// ─── expressErrorHandler ─────────────────────────────────────────────────────
+// ─── Express ─────────────────────────────────────────────────────────────────
 
 describe('expressErrorHandler', () => {
-	test('handles HttpException with correct status and content-type', () => {
-		const handler = expressErrorHandler()
-		const err = new NotFoundException(baseInput)
+	let server: Server
+	let baseUrl: string
+	let fallbackReached = false
 
-		let capturedStatus = 0
-		let capturedHeader = ''
-		let capturedBody: unknown
-
-		type MockRes = {
-			status: (code: number) => MockRes
-			setHeader: (name: string, value: string) => MockRes
-			json: (body: unknown) => void
-		}
-		const res: MockRes = {
-			status(code: number) {
-				capturedStatus = code
-				return res
-			},
-			setHeader(name: string, value: string) {
-				capturedHeader = `${name}: ${value}`
-				return res
-			},
-			json(body: unknown) {
-				capturedBody = body
-			},
-		}
-		let nextCalled = false
-		const emptyReq = { method: 'GET', url: '/' }
-		handler(err, emptyReq, res, () => {
-			nextCalled = true
+	beforeAll(async () => {
+		const app = express()
+		app.get('/http', () => {
+			throw new NotFoundException(baseInput)
 		})
-
-		expect(capturedStatus).toBe(404)
-		expect(capturedHeader).toBe(`Content-Type: ${PROBLEM_JSON_CONTENT_TYPE}`)
-		expect((capturedBody as Record<string, unknown>).status).toBe(404)
-		expect(nextCalled).toBe(false)
+		app.get('/plain', () => {
+			throw new Error('oops')
+		})
+		app.get('/streaming', (_req, res) => {
+			res.write('partial')
+			throw new NotFoundException(baseInput)
+		})
+		app.use(expressErrorHandler())
+		app.use(
+			(err: unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+				fallbackReached = true
+				if (res.headersSent) return next(err)
+				res.status(500).send('fallback')
+			},
+		)
+		await new Promise<void>((resolve) => {
+			server = app.listen(0, () => resolve())
+		})
+		const { port } = server.address() as AddressInfo
+		baseUrl = `http://localhost:${port}`
 	})
 
-	test('calls next() for non-HttpException errors', () => {
-		const handler = expressErrorHandler()
-		let nextCalled = false
-		const emptyReq = { method: 'GET', url: '/' }
-		const emptyRes = { status: () => emptyRes, setHeader: () => emptyRes, json: () => {} }
-		handler(new Error('oops'), emptyReq, emptyRes, () => {
-			nextCalled = true
-		})
-		expect(nextCalled).toBe(true)
+	afterAll(() => {
+		server.close()
+	})
+
+	test('responds with problem+json for HttpException', async () => {
+		const res = await fetch(`${baseUrl}/http`)
+		expect(res.status).toBe(404)
+		expect(res.headers.get('content-type')).toStartWith(PROBLEM_JSON_CONTENT_TYPE)
+		expect(await res.json()).toMatchObject({ ...baseInput, status: 404, title: 'Not Found' })
+	})
+
+	test('delegates other errors to the next handler', async () => {
+		fallbackReached = false
+		const res = await fetch(`${baseUrl}/plain`)
+		expect(res.status).toBe(500)
+		expect(await res.text()).toBe('fallback')
+		expect(fallbackReached).toBe(true)
+	})
+
+	test('delegates when headers were already sent', async () => {
+		fallbackReached = false
+		await fetch(`${baseUrl}/streaming`)
+			.then((res) => res.text())
+			.catch(() => {})
+		expect(fallbackReached).toBe(true)
 	})
 })
 
-// ─── fastifyErrorHandler ──────────────────────────────────────────────────────
+// ─── Fastify ─────────────────────────────────────────────────────────────────
 
 describe('fastifyErrorHandler', () => {
-	test('sends problem details for HttpException', () => {
-		const handler = fastifyErrorHandler()
-		const err = new NotFoundException(baseInput)
+	const app = Fastify({ logger: silentLogger })
+	app.setErrorHandler(fastifyErrorHandler())
+	app.get('/http', () => {
+		throw new NotFoundException(baseInput)
+	})
+	app.get('/plain', () => {
+		throw new Error('secret internals')
+	})
+	app.post('/validated', { schema: { body: { type: 'object', required: ['name'] } } }, () => 'ok')
 
-		let capturedCode = 0
-		let capturedBody: unknown
-		const reply: MockReply = {
-			code(c: number) {
-				capturedCode = c
-				return reply
-			},
-			header(_name: string, _value: string) {
-				return reply
-			},
-			send(b: unknown) {
-				capturedBody = b
-			},
-		}
-		const mockRequest = { log: { error: (_err: unknown) => {} } }
-		handler(err, mockRequest, reply)
+	afterAll(() => app.close())
 
-		expect(capturedCode).toBe(404)
-		expect((capturedBody as Record<string, unknown>).status).toBe(404)
+	test('responds with problem+json for HttpException', async () => {
+		const res = await app.inject({ method: 'GET', url: '/http' })
+		expect(res.statusCode).toBe(404)
+		expect(res.headers['content-type']).toStartWith(PROBLEM_JSON_CONTENT_TYPE)
+		expect(res.json()).toMatchObject({ ...baseInput, status: 404, title: 'Not Found' })
 	})
 
-	test('sends 500 for non-HttpException errors', () => {
-		const handler = fastifyErrorHandler()
-		let capturedCode = 0
-		const reply: MockReply = {
-			code(c: number) {
-				capturedCode = c
-				return reply
-			},
-			header(_name: string, _value: string) {
-				return reply
-			},
-			send(_b: unknown) {},
-		}
-		const mockRequest = { log: { error: (_err: unknown) => {} } }
-		handler(new Error('oops'), mockRequest, reply)
-		expect(capturedCode).toBe(500)
+	test('keeps the status code of Fastify validation errors', async () => {
+		const res = await app.inject({ method: 'POST', url: '/validated', payload: {} })
+		expect(res.statusCode).toBe(400)
+		expect(res.headers['content-type']).toStartWith(PROBLEM_JSON_CONTENT_TYPE)
+		expect(res.json()).toMatchObject({ type: 'about:blank', status: 400, title: 'Bad Request' })
+	})
+
+	test('falls back to 500 without leaking the error message', async () => {
+		const res = await app.inject({ method: 'GET', url: '/plain' })
+		expect(res.statusCode).toBe(500)
+		expect(res.json()).toEqual({ message: 'Internal Server Error' })
 	})
 })
 
-// ─── honoErrorHandler ─────────────────────────────────────────────────────────
+// ─── Hono ────────────────────────────────────────────────────────────────────
 
 describe('honoErrorHandler', () => {
-	test('returns problem details response for HttpException', () => {
-		const handler = honoErrorHandler()
-		const err = new NotFoundException(baseInput)
+	const app = new Hono()
+	app.onError(honoErrorHandler())
+	app.get('/http', () => {
+		throw new NotFoundException(baseInput)
+	})
+	app.get('/plain', () => {
+		throw new Error('oops')
+	})
+	app.use('/auth', basicAuth({ username: 'user', password: 'pass' }))
+	app.get('/auth', (c) => c.text('ok'))
 
-		let capturedBody: unknown
-		let capturedStatus = 0
-		const c = {
-			json(body: unknown, status: number): Response {
-				capturedBody = body
-				capturedStatus = status
-				return new Response(JSON.stringify(body), { status })
-			},
-		}
-		handler(err, c)
-		expect(capturedStatus).toBe(404)
-		expect((capturedBody as Record<string, unknown>).status).toBe(404)
+	test('responds with problem+json for HttpException', async () => {
+		const res = await app.request('/http')
+		expect(res.status).toBe(404)
+		expect(res.headers.get('content-type')).toStartWith(PROBLEM_JSON_CONTENT_TYPE)
+		expect(await res.json()).toMatchObject({ ...baseInput, status: 404, title: 'Not Found' })
 	})
 
-	test('returns 500 for non-HttpException', () => {
-		const handler = honoErrorHandler()
-		let capturedStatus = 0
-		const c = {
-			json(_body: unknown, status: number): Response {
-				capturedStatus = status
-				return new Response(null, { status })
-			},
-		}
-		handler(new Error('oops'), c)
-		expect(capturedStatus).toBe(500)
+	test("renders Hono's own HTTPException response", async () => {
+		const res = await app.request('/auth')
+		expect(res.status).toBe(401)
+		expect(res.headers.get('www-authenticate')).toStartWith('Basic')
+	})
+
+	test('falls back to 500 for other errors', async () => {
+		const res = await app.request('/plain')
+		expect(res.status).toBe(500)
+		expect(await res.json()).toEqual({ message: 'Internal Server Error' })
 	})
 })

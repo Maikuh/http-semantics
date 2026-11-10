@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test'
+
 import { HttpStatusPhrase } from '../enums/http-status-phrase.enum'
 import { BadGatewayException } from './bad-gateway.exception'
 import { BadRequestException } from './bad-request.exception'
@@ -8,8 +9,8 @@ import { ExpectationFailedException } from './expectation-failed.exception'
 import { ForbiddenException } from './forbidden.exception'
 import { GatewayTimeoutException } from './gateway-timeout.exception'
 import { GoneException } from './gone.exception'
-import { HttpException } from './http.exception'
 import { HttpVersionNotSupportedException } from './http-version-not-supported.exception'
+import { HttpException } from './http.exception'
 import { InternalServerErrorException } from './internal-server-error.exception'
 import { LengthRequiredException } from './length-required.exception'
 import { MethodNotAllowedException } from './method-not-allowed.exception'
@@ -31,13 +32,14 @@ import { UnavailableForLegalReasonsException } from './unavailable-for-legal-rea
 import { UnprocessableContentException } from './unprocessable-content.exception'
 import { UnsupportedMediaTypeException } from './unsupported-media-type.exception'
 import { UpgradeRequiredException } from './upgrade-required.exception'
+import { UriTooLongException } from './uri-too-long.exception'
 
 const baseInput = {
 	type: 'https://example.com/problems/test',
 	instance: '/errors/abc-123',
 } as const
 
-const exceptionCases = [
+const exceptionCases: { Cls: typeof NotFoundException; status: number; phrase: string }[] = [
 	{ Cls: BadRequestException, status: 400, phrase: HttpStatusPhrase.BAD_REQUEST },
 	{ Cls: UnauthorizedException, status: 401, phrase: HttpStatusPhrase.UNAUTHORIZED },
 	{ Cls: ForbiddenException, status: 403, phrase: HttpStatusPhrase.FORBIDDEN },
@@ -55,6 +57,7 @@ const exceptionCases = [
 	{ Cls: LengthRequiredException, status: 411, phrase: HttpStatusPhrase.LENGTH_REQUIRED },
 	{ Cls: PreconditionFailedException, status: 412, phrase: HttpStatusPhrase.PRECONDITION_FAILED },
 	{ Cls: ContentTooLargeException, status: 413, phrase: HttpStatusPhrase.CONTENT_TOO_LARGE },
+	{ Cls: UriTooLongException, status: 414, phrase: HttpStatusPhrase.URI_TOO_LONG },
 	{
 		Cls: UnsupportedMediaTypeException,
 		status: 415,
@@ -115,12 +118,28 @@ describe('Named exceptions', () => {
 		describe(Cls.name, () => {
 			test(`sets status to ${status}`, () => {
 				const ex = new Cls(baseInput)
-				expect(ex.problemDetails.status).toBe(status)
+				expect<number>(ex.problemDetails.status).toBe(status)
 			})
 
 			test(`uses default title "${phrase}"`, () => {
 				const ex = new Cls(baseInput)
 				expect(ex.problemDetails.title).toBe(phrase)
+			})
+
+			test('has a non-empty default detail ending with a period', () => {
+				const ex = new Cls(baseInput)
+				expect(ex.problemDetails.detail).toMatch(/^\S.*\.$/)
+			})
+
+			test('forwards the cause option', () => {
+				const cause = new Error('root cause')
+				const ex = new Cls(baseInput, { cause })
+				expect(ex.cause).toBe(cause)
+			})
+
+			test('ignores a caller-provided status', () => {
+				const ex = new Cls({ ...baseInput, status: 299 })
+				expect<number>(ex.problemDetails.status).toBe(status)
 			})
 
 			test('allows overriding title', () => {
@@ -140,9 +159,7 @@ describe('Named exceptions', () => {
 
 			test('passes through extension fields', () => {
 				const ex = new Cls({ ...baseInput, errors: [{ field: 'email', message: 'required' }] })
-				expect((ex.problemDetails as Record<string, unknown>).errors).toEqual([
-					{ field: 'email', message: 'required' },
-				])
+				expect(ex.problemDetails.errors).toEqual([{ field: 'email', message: 'required' }])
 			})
 
 			test('is instanceof HttpException', () => {
@@ -151,4 +168,39 @@ describe('Named exceptions', () => {
 			})
 		})
 	}
+})
+
+describe('Exception coverage', () => {
+	test('every 4xx/5xx status except unused placeholders has a named exception', async () => {
+		const { HttpStatus } = await import('../enums/http-status.enum')
+		const placeholders = new Set([402])
+		const expected = Object.values(HttpStatus)
+			.filter((v): v is number => typeof v === 'number' && v >= 400 && !placeholders.has(v))
+			.toSorted((a, b) => a - b)
+		const covered = exceptionCases.map(({ status }) => status).toSorted((a, b) => a - b)
+		expect(covered).toEqual(expected)
+	})
+})
+
+describe('Typed extensions', () => {
+	test('extension members are typed on problemDetails', () => {
+		const ex = new UnprocessableContentException<{ errors: { field: string }[] }>({
+			...baseInput,
+			errors: [{ field: 'email' }],
+		})
+		const field: string | undefined = ex.problemDetails.errors[0]?.field
+		expect(field).toBe('email')
+	})
+
+	test('serializes standard members first, then extensions', () => {
+		const ex = new NotFoundException({ ...baseInput, resourceId: 42 })
+		expect(Object.keys(ex.toJSON())).toEqual([
+			'type',
+			'status',
+			'title',
+			'detail',
+			'instance',
+			'resourceId',
+		])
+	})
 })
