@@ -2,17 +2,14 @@ import { describe, expect, test } from 'bun:test'
 
 import { InternalServerErrorException } from '../exceptions/internal-server-error.exception'
 import { NotFoundException } from '../exceptions/not-found.exception'
+import { getProblemDetails, isClientError, isHttpException, isServerError } from './http.utils'
 import {
-	getProblemDetails,
 	getStatusPhrase,
-	isClientError,
 	isHttpStatusCode,
-	isHttpException,
 	isInformational,
 	isRedirect,
-	isServerError,
 	isSuccess,
-} from './http.utils'
+} from './status.utils'
 
 const baseInput = {
 	type: 'https://example.com/problems/test',

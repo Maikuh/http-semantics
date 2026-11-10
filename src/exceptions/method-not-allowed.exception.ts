@@ -1,11 +1,9 @@
 import { HttpStatusPhrase } from '../enums/http-status-phrase.enum'
 import { HttpStatus } from '../enums/http-status.enum'
-import type {
-	HttpExceptionOptions,
-	ProblemDetailsWithSomeDefaults,
-} from '../types/problem-details.type'
+import type { MethodNotAllowedOptions } from '../types/http-exception-options.type'
+import type { ProblemDetailsWithSomeDefaults } from '../types/problem-details.type'
 import { HttpException } from './http.exception'
-import { buildProblemDetails } from './problem-details.builder'
+import { buildProblemDetails, joinHeaderValues, withHeaders } from './problem-details.builder'
 
 /**
  * 405 Method Not Allowed
@@ -20,7 +18,7 @@ export class MethodNotAllowedException<
 
 	constructor(
 		problemDetails: ProblemDetailsWithSomeDefaults<TExtensions>,
-		options?: HttpExceptionOptions,
+		{ allow, ...options }: MethodNotAllowedOptions = {},
 	) {
 		super(
 			buildProblemDetails(
@@ -29,7 +27,7 @@ export class MethodNotAllowedException<
 				HttpStatusPhrase.METHOD_NOT_ALLOWED,
 				'The method specified in the request is not supported for the resource.',
 			),
-			options,
+			withHeaders(options, { Allow: joinHeaderValues(allow) }),
 		)
 	}
 }

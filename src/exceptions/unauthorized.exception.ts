@@ -1,11 +1,9 @@
 import { HttpStatusPhrase } from '../enums/http-status-phrase.enum'
 import { HttpStatus } from '../enums/http-status.enum'
-import type {
-	HttpExceptionOptions,
-	ProblemDetailsWithSomeDefaults,
-} from '../types/problem-details.type'
+import type { UnauthorizedOptions } from '../types/http-exception-options.type'
+import type { ProblemDetailsWithSomeDefaults } from '../types/problem-details.type'
 import { HttpException } from './http.exception'
-import { buildProblemDetails } from './problem-details.builder'
+import { buildProblemDetails, joinHeaderValues, withHeaders } from './problem-details.builder'
 
 /**
  * 401 Unauthorized
@@ -20,7 +18,7 @@ export class UnauthorizedException<
 
 	constructor(
 		problemDetails: ProblemDetailsWithSomeDefaults<TExtensions>,
-		options?: HttpExceptionOptions,
+		{ wwwAuthenticate, ...options }: UnauthorizedOptions = {},
 	) {
 		super(
 			buildProblemDetails(
@@ -29,7 +27,7 @@ export class UnauthorizedException<
 				HttpStatusPhrase.UNAUTHORIZED,
 				'The request lacks valid authentication credentials for the target resource.',
 			),
-			options,
+			withHeaders(options, { 'WWW-Authenticate': joinHeaderValues(wwwAuthenticate) }),
 		)
 	}
 }

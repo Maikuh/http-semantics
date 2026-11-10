@@ -1,9 +1,15 @@
-import { HttpStatus } from '../enums/http-status.enum'
+import { createHttpException } from '../exceptions/create-http-exception'
 import { HttpException } from '../exceptions/http.exception'
-import type { HttpStatusCode } from '../types/http-status-code.type'
-import type { ProblemDetails } from '../types/problem-details.type'
+import { InternalServerErrorException } from '../exceptions/internal-server-error.exception'
 import { PROBLEM_JSON_CONTENT_TYPE } from '../types/problem-json.constant'
-import { getStatusPhrase, isHttpStatusCode } from '../utils/http.utils'
+
+/**
+ * Returns the 500 problem details sent for errors that aren't `HttpException`s.
+ * `detail` defaults to the `InternalServerErrorException` one.
+ */
+function fallbackException(detail: string | undefined): HttpException {
+	return new InternalServerErrorException({ type: 'about:blank', instance: '', detail })
+}
 
 // ─── Express ────────────────────────────────────────────────────────────────
 
@@ -27,8 +33,9 @@ export type ExpressErrorHandler = (
 
 /**
  * Returns a ready-to-use Express error handler that responds with RFC 9457
- * Problem Details JSON for any `HttpException`, and delegates everything else
- * (or anything raised after the response has started) to the next error handler.
+ * Problem Details JSON (plus `error.headers`) for any `HttpException`, and
+ * delegates everything else (or anything raised after the response has
+ * started) to the next error handler.
  *
  * @example
  * ```ts
@@ -44,6 +51,7 @@ export function expressErrorHandler(): ExpressErrorHandler {
 			return
 		}
 
+		for (const [name, value] of Object.entries(err.headers)) res.setHeader(name, value)
 		res.setHeader('Content-Type', PROBLEM_JSON_CONTENT_TYPE)
 		res.status(err.problemDetails.status).json(err.problemDetails)
 	}
@@ -71,20 +79,29 @@ export type FastifyErrorHandler = (
  * Reads the `statusCode` Fastify (and its plugins) attach to their own errors,
  * e.g. 400 for schema validation failures or 413 for oversized bodies.
  */
-function getErrorStatusCode(err: unknown): HttpStatusCode | undefined {
+function getErrorStatusCode(err: unknown): number | undefined {
 	if (typeof err !== 'object' || err === null || !('statusCode' in err)) return undefined
 	const { statusCode } = err
-	return isHttpStatusCode(statusCode) && statusCode >= 400 ? statusCode : undefined
+	return typeof statusCode === 'number' &&
+		Number.isInteger(statusCode) &&
+		statusCode >= 400 &&
+		statusCode < 600
+		? statusCode
+		: undefined
 }
 
 /**
  * Returns a ready-to-use Fastify error handler that responds with RFC 9457
- * Problem Details JSON for any `HttpException`. Errors carrying a 4xx/5xx
- * `statusCode` (such as Fastify's validation errors) are converted to problem
- * details with that status; anything else falls back to a 500.
+ * Problem Details JSON (plus `error.headers`) for any `HttpException`.
+ * Errors carrying a 4xx/5xx `statusCode` (such as Fastify's validation errors)
+ * are converted to problem details with that status; anything else becomes a
+ * 500 problem details response.
  *
  * 5xx errors are logged at `error` level and 4xx errors at `info` level,
  * matching Fastify's default error handler.
+ *
+ * @param fallbackDetail - `detail` sent for 5xx errors that aren't `HttpException`s,
+ * so internal error messages are never leaked.
  *
  * @example
  * ```ts
@@ -92,37 +109,31 @@ function getErrorStatusCode(err: unknown): HttpStatusCode | undefined {
  * fastify.setErrorHandler(fastifyErrorHandler())
  * ```
  */
-export function fastifyErrorHandler(
-	fallbackMessage = 'Internal Server Error',
-): FastifyErrorHandler {
+export function fastifyErrorHandler(fallbackDetail?: string): FastifyErrorHandler {
 	return function httpErrorHandler(err, request, reply) {
-		let problemDetails: ProblemDetails | undefined
+		let exception: HttpException
 		if (err instanceof HttpException) {
-			problemDetails = err.problemDetails
+			exception = err
 		} else {
 			const status = getErrorStatusCode(err)
-			if (status !== undefined) {
-				problemDetails = {
-					type: 'about:blank',
-					status,
-					title: getStatusPhrase(status) ?? 'Error',
-					// Don't leak internal error messages for server errors.
-					detail: status < 500 && err instanceof Error ? err.message : fallbackMessage,
-					instance: '',
-				}
-			}
+			exception =
+				status === undefined
+					? fallbackException(fallbackDetail)
+					: createHttpException({
+							status,
+							detail: status < 500 && err instanceof Error ? err.message : fallbackDetail,
+						})
 		}
 
-		const status = problemDetails?.status ?? HttpStatus.INTERNAL_SERVER_ERROR
+		const { status } = exception.problemDetails
 		if (status >= 500) request.log.error(err)
 		else request.log.info({ err }, err instanceof Error ? err.message : 'Client error')
 
-		if (problemDetails === undefined) {
-			reply.code(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: fallbackMessage })
-			return
-		}
-
-		reply.code(status).header('Content-Type', PROBLEM_JSON_CONTENT_TYPE).send(problemDetails)
+		for (const [name, value] of Object.entries(exception.headers)) reply.header(name, value)
+		reply
+			.code(status)
+			.header('Content-Type', PROBLEM_JSON_CONTENT_TYPE)
+			.send(exception.problemDetails)
 	}
 }
 
@@ -153,8 +164,12 @@ function hasGetResponse(err: unknown): err is { getResponse(): unknown } {
 
 /**
  * Returns a ready-to-use Hono error handler that responds with RFC 9457
- * Problem Details JSON for any `HttpException`, lets Hono's own `HTTPException`
- * render its response, and falls back to a 500 for other errors.
+ * Problem Details JSON (plus `error.headers`) for any `HttpException`, lets
+ * Hono's own `HTTPException` render its response, and responds with 500
+ * problem details for other errors.
+ *
+ * @param fallbackDetail - `detail` sent for errors that aren't `HttpException`s,
+ * so internal error messages are never leaked.
  *
  * @example
  * ```ts
@@ -162,20 +177,16 @@ function hasGetResponse(err: unknown): err is { getResponse(): unknown } {
  * app.onError(honoErrorHandler())
  * ```
  */
-export function honoErrorHandler<TResponse>(
-	fallbackMessage = 'Internal Server Error',
-): HonoErrorHandler<TResponse> {
+export function honoErrorHandler<TResponse>(fallbackDetail?: string): HonoErrorHandler<TResponse> {
 	return function httpErrorHandler(err, c) {
-		if (err instanceof HttpException) {
-			return c.body(JSON.stringify(err.problemDetails), err.problemDetails.status, {
-				'Content-Type': PROBLEM_JSON_CONTENT_TYPE,
-			})
-		}
-		if (hasGetResponse(err)) {
+		if (!(err instanceof HttpException) && hasGetResponse(err)) {
 			return err.getResponse() as TResponse
 		}
-		return c.body(JSON.stringify({ message: fallbackMessage }), HttpStatus.INTERNAL_SERVER_ERROR, {
-			'Content-Type': 'application/json',
+
+		const exception = err instanceof HttpException ? err : fallbackException(fallbackDetail)
+		return c.body(JSON.stringify(exception.problemDetails), exception.problemDetails.status, {
+			...exception.headers,
+			'Content-Type': PROBLEM_JSON_CONTENT_TYPE,
 		})
 	}
 }

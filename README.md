@@ -35,8 +35,9 @@ yarn add http-semantics
 bun add http-semantics
 ```
 
-The package is ESM-only. It can still be loaded with `require()` on Node.js versions that support
-`require(esm)` (20.19+, 22.12+).
+Requires Node.js 20 or later (or any modern runtime: Bun, Deno, browsers, edge workers). The package
+is ESM-only; it can still be loaded with `require()` on Node.js 20.19+ and 22.12+, which support
+`require(esm)`.
 
 ## Usage
 
@@ -103,6 +104,53 @@ try {
 }
 ```
 
+#### Response headers
+
+Some status codes come with header fields that RFC 9110 requires or recommends. The related
+exceptions accept them as typed options, and every exception accepts arbitrary `headers`. They're
+exposed as `error.headers` (not part of the JSON body) and sent by the bundled framework handlers.
+
+```ts
+new UnauthorizedException(problem, { wwwAuthenticate: 'Bearer realm="api"' }) // WWW-Authenticate
+new ProxyAuthenticationRequiredException(problem, { proxyAuthenticate: 'Basic realm="proxy"' }) // Proxy-Authenticate
+new MethodNotAllowedException(problem, { allow: ['GET', 'HEAD'] }) // Allow: GET, HEAD
+new UpgradeRequiredException(problem, { upgrade: ['HTTP/3.0'] }) // Upgrade
+new TooManyRequestsException(problem, { retryAfter: 30 }) // Retry-After: 30
+new ServiceUnavailableException(problem, { retryAfter: new Date('2030-01-01') }) // Retry-After: <HTTP-date>
+new ContentTooLargeException(problem, { retryAfter: 60 }) // Retry-After: 60
+
+new NotFoundException(problem, { headers: { 'Cache-Control': 'no-store' } }) // any header
+```
+
+#### Creating exceptions dynamically
+
+`createHttpException` returns the named exception for a status code, falling back to a plain
+`HttpException` for codes without one (e.g. 418). `type` defaults to `'about:blank'`.
+
+```ts
+import { createHttpException, NotFoundException } from 'http-semantics'
+
+const error = createHttpException({ status: 404, detail: 'No such user.' })
+error instanceof NotFoundException // true
+```
+
+On the client side, `httpExceptionFromResponse` rebuilds an exception from a `fetch` response. It
+parses problem details bodies, falls back to the status code for anything else, and copies
+`Retry-After`, `Allow`, `WWW-Authenticate`, `Proxy-Authenticate` and `Upgrade` to `error.headers`:
+
+```ts
+import { httpExceptionFromResponse, TooManyRequestsException } from 'http-semantics'
+
+const res = await fetch('https://api.example.com/users/1')
+if (!res.ok) {
+	const error = await httpExceptionFromResponse(res)
+	if (error instanceof TooManyRequestsException) {
+		console.log(`Retry in ${error.headers['Retry-After']}s`)
+	}
+	throw error
+}
+```
+
 #### Available exceptions
 
 | Status | Exception                              | Status | Exception                                |
@@ -130,7 +178,7 @@ try {
 
 ### Framework error handlers
 
-Each handler responds with the problem details as the body and
+Each handler responds with the problem details as the body, the exception's `headers`, and
 `Content-Type: application/problem+json`. They only rely on the parts of each framework's API they
 use, so no framework is a dependency of this package.
 
@@ -152,8 +200,9 @@ fastify.setErrorHandler(fastifyErrorHandler())
 ```
 
 Errors that carry a 4xx/5xx `statusCode` (such as Fastify's schema validation errors) keep their
-status and are converted to problem details. Other errors become a `500` with
-`{ message: 'Internal Server Error' }` (customizable via the first argument).
+status and are converted to problem details. Any other error becomes a `500` problem details
+response. Internal error messages are never sent for 5xx responses; pass a string as the first
+argument to customize their `detail`.
 
 #### Hono
 
@@ -164,8 +213,8 @@ app.onError(honoErrorHandler())
 ```
 
 Hono's own `HTTPException` (thrown by middleware such as `basicAuth` or `bodyLimit`) keeps its
-original response. Other errors become a `500` with `{ message: 'Internal Server Error' }`
-(customizable via the first argument).
+original response. Any other error becomes a `500` problem details response without the internal
+error message; pass a string as the first argument to customize its `detail`.
 
 #### Other frameworks
 
@@ -175,7 +224,7 @@ import { HttpException, PROBLEM_JSON_CONTENT_TYPE } from 'http-semantics'
 if (error instanceof HttpException) {
 	return new Response(JSON.stringify(error), {
 		status: error.problemDetails.status,
-		headers: { 'Content-Type': PROBLEM_JSON_CONTENT_TYPE },
+		headers: { ...error.headers, 'Content-Type': PROBLEM_JSON_CONTENT_TYPE },
 	})
 }
 ```
@@ -221,7 +270,11 @@ isRedirect(308) // true
 - `ProblemDetails<TExtensions>`: an RFC 9457 problem details object.
 - `ProblemDetailsWithSomeDefaults<TExtensions>`: the input of every named exception.
 - `HttpStatusCode`: union of every status code in `HttpStatus` (`100 | 101 | 200 | ...`).
-- `HttpExceptionOptions`: `{ cause?: unknown }`.
+- `HttpExceptionOptions`: `{ cause?: unknown; headers?: Record<string, string> }`, extended by
+  `RetryAfterOptions`, `UnauthorizedOptions`, `ProxyAuthenticationRequiredOptions`,
+  `MethodNotAllowedOptions` and `UpgradeRequiredOptions`.
+- `HttpExceptionInit`: the input of `createHttpException`.
+- `ResponseLike`: the minimal `Response` shape read by `httpExceptionFromResponse`.
 
 ## Why?
 

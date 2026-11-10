@@ -1,11 +1,9 @@
 import { HttpStatusPhrase } from '../enums/http-status-phrase.enum'
 import { HttpStatus } from '../enums/http-status.enum'
-import type {
-	HttpExceptionOptions,
-	ProblemDetailsWithSomeDefaults,
-} from '../types/problem-details.type'
+import type { ProxyAuthenticationRequiredOptions } from '../types/http-exception-options.type'
+import type { ProblemDetailsWithSomeDefaults } from '../types/problem-details.type'
 import { HttpException } from './http.exception'
-import { buildProblemDetails } from './problem-details.builder'
+import { buildProblemDetails, joinHeaderValues, withHeaders } from './problem-details.builder'
 
 /**
  * 407 Proxy Authentication Required
@@ -20,7 +18,7 @@ export class ProxyAuthenticationRequiredException<
 
 	constructor(
 		problemDetails: ProblemDetailsWithSomeDefaults<TExtensions>,
-		options?: HttpExceptionOptions,
+		{ proxyAuthenticate, ...options }: ProxyAuthenticationRequiredOptions = {},
 	) {
 		super(
 			buildProblemDetails(
@@ -29,7 +27,7 @@ export class ProxyAuthenticationRequiredException<
 				HttpStatusPhrase.PROXY_AUTHENTICATION_REQUIRED,
 				'The client needs to authenticate itself in order to use a proxy for this request.',
 			),
-			options,
+			withHeaders(options, { 'Proxy-Authenticate': joinHeaderValues(proxyAuthenticate) }),
 		)
 	}
 }

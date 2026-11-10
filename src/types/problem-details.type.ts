@@ -57,11 +57,3 @@ export type ProblemDetailsWithSomeDefaults<
 > = Pick<ProblemDetailsBase, 'type' | 'instance'> &
 	Partial<Pick<ProblemDetailsBase, 'title' | 'detail'>> &
 	TExtensions
-
-/**
- * Options accepted by every `HttpException` constructor (mirrors the native `ErrorOptions`).
- */
-export type HttpExceptionOptions = {
-	/** The underlying error that caused this exception, exposed as `error.cause`. */
-	cause?: unknown
-}

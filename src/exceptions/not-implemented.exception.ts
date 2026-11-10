@@ -1,9 +1,7 @@
 import { HttpStatusPhrase } from '../enums/http-status-phrase.enum'
 import { HttpStatus } from '../enums/http-status.enum'
-import type {
-	HttpExceptionOptions,
-	ProblemDetailsWithSomeDefaults,
-} from '../types/problem-details.type'
+import type { HttpExceptionOptions } from '../types/http-exception-options.type'
+import type { ProblemDetailsWithSomeDefaults } from '../types/problem-details.type'
 import { HttpException } from './http.exception'
 import { buildProblemDetails } from './problem-details.builder'
 

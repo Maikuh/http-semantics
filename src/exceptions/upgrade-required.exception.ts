@@ -1,11 +1,9 @@
 import { HttpStatusPhrase } from '../enums/http-status-phrase.enum'
 import { HttpStatus } from '../enums/http-status.enum'
-import type {
-	HttpExceptionOptions,
-	ProblemDetailsWithSomeDefaults,
-} from '../types/problem-details.type'
+import type { UpgradeRequiredOptions } from '../types/http-exception-options.type'
+import type { ProblemDetailsWithSomeDefaults } from '../types/problem-details.type'
 import { HttpException } from './http.exception'
-import { buildProblemDetails } from './problem-details.builder'
+import { buildProblemDetails, joinHeaderValues, withHeaders } from './problem-details.builder'
 
 /**
  * 426 Upgrade Required
@@ -20,7 +18,7 @@ export class UpgradeRequiredException<
 
 	constructor(
 		problemDetails: ProblemDetailsWithSomeDefaults<TExtensions>,
-		options?: HttpExceptionOptions,
+		{ upgrade, ...options }: UpgradeRequiredOptions = {},
 	) {
 		super(
 			buildProblemDetails(
@@ -29,7 +27,7 @@ export class UpgradeRequiredException<
 				HttpStatusPhrase.UPGRADE_REQUIRED,
 				'The server refuses to perform the request using the current protocol but might be willing to do so after upgrading to a different protocol.',
 			),
-			options,
+			withHeaders(options, { Upgrade: joinHeaderValues(upgrade) }),
 		)
 	}
 }

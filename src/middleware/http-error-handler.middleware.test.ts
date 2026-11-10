@@ -8,6 +8,7 @@ import { Hono } from 'hono'
 import { basicAuth } from 'hono/basic-auth'
 
 import { NotFoundException } from '../exceptions/not-found.exception'
+import { TooManyRequestsException } from '../exceptions/too-many-requests.exception'
 import { PROBLEM_JSON_CONTENT_TYPE } from '../types/problem-json.constant'
 import {
 	expressErrorHandler,
@@ -36,6 +37,9 @@ describe('expressErrorHandler', () => {
 		})
 		app.get('/plain', () => {
 			throw new Error('oops')
+		})
+		app.get('/limited', () => {
+			throw new TooManyRequestsException(baseInput, { retryAfter: 30 })
 		})
 		app.get('/streaming', (_req, res) => {
 			res.write('partial')
@@ -67,6 +71,12 @@ describe('expressErrorHandler', () => {
 		expect(await res.json()).toMatchObject({ ...baseInput, status: 404, title: 'Not Found' })
 	})
 
+	test('sends exception headers', async () => {
+		const res = await fetch(`${baseUrl}/limited`)
+		expect(res.status).toBe(429)
+		expect(res.headers.get('retry-after')).toBe('30')
+	})
+
 	test('delegates other errors to the next handler', async () => {
 		fallbackReached = false
 		const res = await fetch(`${baseUrl}/plain`)
@@ -95,6 +105,9 @@ describe('fastifyErrorHandler', () => {
 	app.get('/plain', () => {
 		throw new Error('secret internals')
 	})
+	app.get('/limited', () => {
+		throw new TooManyRequestsException(baseInput, { retryAfter: 30 })
+	})
 	app.post('/validated', { schema: { body: { type: 'object', required: ['name'] } } }, () => 'ok')
 
 	afterAll(() => app.close())
@@ -104,6 +117,12 @@ describe('fastifyErrorHandler', () => {
 		expect(res.statusCode).toBe(404)
 		expect(res.headers['content-type']).toStartWith(PROBLEM_JSON_CONTENT_TYPE)
 		expect(res.json()).toMatchObject({ ...baseInput, status: 404, title: 'Not Found' })
+	})
+
+	test('sends exception headers', async () => {
+		const res = await app.inject({ method: 'GET', url: '/limited' })
+		expect(res.statusCode).toBe(429)
+		expect(res.headers['retry-after']).toBe('30')
 	})
 
 	test('keeps the status code of Fastify validation errors', async () => {
@@ -116,7 +135,9 @@ describe('fastifyErrorHandler', () => {
 	test('falls back to 500 without leaking the error message', async () => {
 		const res = await app.inject({ method: 'GET', url: '/plain' })
 		expect(res.statusCode).toBe(500)
-		expect(res.json()).toEqual({ message: 'Internal Server Error' })
+		expect(res.headers['content-type']).toStartWith(PROBLEM_JSON_CONTENT_TYPE)
+		expect(res.json()).toMatchObject({ type: 'about:blank', status: 500 })
+		expect(JSON.stringify(res.json())).not.toContain('secret internals')
 	})
 })
 
@@ -131,6 +152,9 @@ describe('honoErrorHandler', () => {
 	app.get('/plain', () => {
 		throw new Error('oops')
 	})
+	app.get('/limited', () => {
+		throw new TooManyRequestsException(baseInput, { retryAfter: 30 })
+	})
 	app.use('/auth', basicAuth({ username: 'user', password: 'pass' }))
 	app.get('/auth', (c) => c.text('ok'))
 
@@ -139,6 +163,12 @@ describe('honoErrorHandler', () => {
 		expect(res.status).toBe(404)
 		expect(res.headers.get('content-type')).toStartWith(PROBLEM_JSON_CONTENT_TYPE)
 		expect(await res.json()).toMatchObject({ ...baseInput, status: 404, title: 'Not Found' })
+	})
+
+	test('sends exception headers', async () => {
+		const res = await app.request('/limited')
+		expect(res.status).toBe(429)
+		expect(res.headers.get('retry-after')).toBe('30')
 	})
 
 	test("renders Hono's own HTTPException response", async () => {
@@ -150,6 +180,7 @@ describe('honoErrorHandler', () => {
 	test('falls back to 500 for other errors', async () => {
 		const res = await app.request('/plain')
 		expect(res.status).toBe(500)
-		expect(await res.json()).toEqual({ message: 'Internal Server Error' })
+		expect(res.headers.get('content-type')).toStartWith(PROBLEM_JSON_CONTENT_TYPE)
+		expect(await res.json()).toMatchObject({ type: 'about:blank', status: 500 })
 	})
 })

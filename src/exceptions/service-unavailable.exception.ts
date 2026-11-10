@@ -1,11 +1,9 @@
 import { HttpStatusPhrase } from '../enums/http-status-phrase.enum'
 import { HttpStatus } from '../enums/http-status.enum'
-import type {
-	HttpExceptionOptions,
-	ProblemDetailsWithSomeDefaults,
-} from '../types/problem-details.type'
+import type { RetryAfterOptions } from '../types/http-exception-options.type'
+import type { ProblemDetailsWithSomeDefaults } from '../types/problem-details.type'
 import { HttpException } from './http.exception'
-import { buildProblemDetails } from './problem-details.builder'
+import { buildProblemDetails, formatRetryAfter, withHeaders } from './problem-details.builder'
 
 /**
  * 503 Service Unavailable
@@ -20,7 +18,7 @@ export class ServiceUnavailableException<
 
 	constructor(
 		problemDetails: ProblemDetailsWithSomeDefaults<TExtensions>,
-		options?: HttpExceptionOptions,
+		{ retryAfter, ...options }: RetryAfterOptions = {},
 	) {
 		super(
 			buildProblemDetails(
@@ -29,7 +27,7 @@ export class ServiceUnavailableException<
 				HttpStatusPhrase.SERVICE_UNAVAILABLE,
 				'The server is currently unable to handle the request due to a temporary overload or scheduled maintenance.',
 			),
-			options,
+			withHeaders(options, { 'Retry-After': formatRetryAfter(retryAfter) }),
 		)
 	}
 }

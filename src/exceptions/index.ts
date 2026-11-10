@@ -1,3 +1,4 @@
+export * from './create-http-exception'
 export * from './bad-gateway.exception'
 export * from './bad-request.exception'
 export * from './conflict.exception'
