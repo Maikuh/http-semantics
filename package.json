@@ -48,7 +48,7 @@
 		"node": ">=20"
 	},
 	"scripts": {
-		"build": "tsdown",
+		"build": "bun --bun tsdown",
 		"postbuild": "find dist -type f -empty -delete",
 		"check:package": "publint && attw --pack . --profile esm-only && node scripts/smoke-test.js",
 		"test": "bun test",
