@@ -17,7 +17,6 @@ describe('createHttpException', () => {
 			status: 404,
 			title: 'Not Found',
 			detail: 'No such user.',
-			instance: '',
 		})
 	})
 

@@ -1,9 +1,9 @@
 import { HttpStatusPhrase } from '../enums/http-status-phrase.enum'
 import { HttpStatus } from '../enums/http-status.enum'
-import type { HttpExceptionOptions } from '../types/http-exception-options.type'
+import type { RangeNotSatisfiableOptions } from '../types/http-exception-options.type'
 import type { ProblemDetailsWithSomeDefaults } from '../types/problem-details.type'
 import { HttpException } from './http.exception'
-import { buildProblemDetails } from './problem-details.builder'
+import { buildProblemDetails, formatUnsatisfiedRange, withHeaders } from './problem-details.builder'
 
 /**
  * 416 Range Not Satisfiable
@@ -18,7 +18,7 @@ export class RangeNotSatisfiableException<
 
 	constructor(
 		problemDetails: ProblemDetailsWithSomeDefaults<TExtensions>,
-		options?: HttpExceptionOptions,
+		{ completeLength, ...options }: RangeNotSatisfiableOptions = {},
 	) {
 		super(
 			buildProblemDetails(
@@ -27,7 +27,7 @@ export class RangeNotSatisfiableException<
 				HttpStatusPhrase.RANGE_NOT_SATISFIABLE,
 				'The requested range cannot be satisfied.',
 			),
-			options,
+			withHeaders(options, { 'Content-Range': formatUnsatisfiedRange(completeLength) }),
 		)
 	}
 }

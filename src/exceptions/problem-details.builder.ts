@@ -21,7 +21,7 @@ export function buildProblemDetails<TExtensions extends Record<string, unknown>>
 		status,
 		title: title || defaultTitle,
 		detail: detail ?? defaultDetail,
-		instance,
+		...(instance === undefined ? {} : { instance }),
 		...extensions,
 	} as ProblemDetails<TExtensions>
 }
@@ -55,6 +55,19 @@ export function formatRetryAfter(retryAfter: number | Date | undefined): string 
 		throw new RangeError(`retryAfter must be a non-negative number of seconds, got ${retryAfter}`)
 	}
 	return String(Math.ceil(retryAfter))
+}
+
+/**
+ * Formats an unsatisfied-range `Content-Range` value: `bytes`, `*`, `/` and the length.
+ *
+ * @internal
+ */
+export function formatUnsatisfiedRange(completeLength: number | undefined): string | undefined {
+	if (completeLength === undefined) return undefined
+	if (!Number.isSafeInteger(completeLength) || completeLength < 0) {
+		throw new RangeError(`completeLength must be a non-negative integer, got ${completeLength}`)
+	}
+	return `bytes */${completeLength}`
 }
 
 /**

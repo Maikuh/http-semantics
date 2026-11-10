@@ -46,8 +46,9 @@ is ESM-only; it can still be loaded with `require()` on Node.js 20.19+ and 22.12
 Every named exception extends `HttpException`, which extends the global `Error`; they're meant to be
 `throw`n. The constructor takes an RFC 9457 problem details object:
 
-- `type` and `instance` are **required**, since they identify the problem type and this specific
-  occurrence.
+- `type` is **required**, since it identifies the problem type (use `'about:blank'` when the status
+  code says it all).
+- `instance` (a URI identifying this specific occurrence) is optional.
 - `title` defaults to the status reason phrase and `detail` to a generic description.
 - `status` is always set by the class.
 - Any other member is kept as an RFC 9457 _extension member_.
@@ -115,6 +116,7 @@ new UnauthorizedException(problem, { wwwAuthenticate: 'Bearer realm="api"' }) //
 new ProxyAuthenticationRequiredException(problem, { proxyAuthenticate: 'Basic realm="proxy"' }) // Proxy-Authenticate
 new MethodNotAllowedException(problem, { allow: ['GET', 'HEAD'] }) // Allow: GET, HEAD
 new UpgradeRequiredException(problem, { upgrade: ['HTTP/3.0'] }) // Upgrade
+new RangeNotSatisfiableException(problem, { completeLength: 1024 }) // Content-Range: bytes */1024
 new TooManyRequestsException(problem, { retryAfter: 30 }) // Retry-After: 30
 new ServiceUnavailableException(problem, { retryAfter: new Date('2030-01-01') }) // Retry-After: <HTTP-date>
 new ContentTooLargeException(problem, { retryAfter: 60 }) // Retry-After: 60
@@ -272,7 +274,7 @@ isRedirect(308) // true
 - `HttpStatusCode`: union of every status code in `HttpStatus` (`100 | 101 | 200 | ...`).
 - `HttpExceptionOptions`: `{ cause?: unknown; headers?: Record<string, string> }`, extended by
   `RetryAfterOptions`, `UnauthorizedOptions`, `ProxyAuthenticationRequiredOptions`,
-  `MethodNotAllowedOptions` and `UpgradeRequiredOptions`.
+  `MethodNotAllowedOptions`, `UpgradeRequiredOptions` and `RangeNotSatisfiableOptions`.
 - `HttpExceptionInit`: the input of `createHttpException`.
 - `ResponseLike`: the minimal `Response` shape read by `httpExceptionFromResponse`.
 

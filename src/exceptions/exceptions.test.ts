@@ -204,3 +204,11 @@ describe('Typed extensions', () => {
 		])
 	})
 })
+
+describe('Optional instance', () => {
+	test('is omitted from problem details when not provided', () => {
+		const ex = new NotFoundException({ type: 'about:blank' })
+		expect('instance' in ex.problemDetails).toBe(false)
+		expect(JSON.stringify(ex)).not.toContain('instance')
+	})
+})

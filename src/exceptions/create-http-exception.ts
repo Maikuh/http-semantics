@@ -92,7 +92,7 @@ export type HttpExceptionInit = {
  * Creates the named exception matching `status` (e.g. `NotFoundException` for 404), falling
  * back to a plain `HttpException` for 4xx/5xx codes without a named class (e.g. 418).
  *
- * `type` defaults to `'about:blank'` (as RFC 9457 specifies) and `instance` to `''`.
+ * `type` defaults to `'about:blank'`, as RFC 9457 specifies.
  *
  * @throws {RangeError} if `status` is not an integer between 400 and 599.
  *
@@ -103,7 +103,7 @@ export type HttpExceptionInit = {
  * ```
  */
 export function createHttpException(
-	{ status, type = 'about:blank', instance = '', title, detail, ...extensions }: HttpExceptionInit,
+	{ status, type = 'about:blank', instance, title, detail, ...extensions }: HttpExceptionInit,
 	options?: HttpExceptionOptions,
 ): HttpException {
 	if (!Number.isInteger(status) || status < 400 || status > 599) {
@@ -121,7 +121,7 @@ export function createHttpException(
 		status: status as HttpStatusCode,
 		title: title ?? getStatusPhrase(status) ?? (status < 500 ? 'Client Error' : 'Server Error'),
 		detail: detail ?? '',
-		instance,
+		...(instance === undefined ? {} : { instance }),
 		...extensions,
 	}
 	return new HttpException(problemDetails, options)

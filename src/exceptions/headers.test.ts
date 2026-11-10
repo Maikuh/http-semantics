@@ -5,6 +5,7 @@ import { HttpException } from './http.exception'
 import { MethodNotAllowedException } from './method-not-allowed.exception'
 import { NotFoundException } from './not-found.exception'
 import { ProxyAuthenticationRequiredException } from './proxy-authentication-required.exception'
+import { RangeNotSatisfiableException } from './range-not-satisfiable.exception'
 import { ServiceUnavailableException } from './service-unavailable.exception'
 import { TooManyRequestsException } from './too-many-requests.exception'
 import { UnauthorizedException } from './unauthorized.exception'
@@ -122,5 +123,21 @@ describe('Challenge and list headers', () => {
 	test('UpgradeRequiredException sets Upgrade', () => {
 		const ex = new UpgradeRequiredException(baseInput, { upgrade: ['HTTP/3.0'] })
 		expect(ex.headers.Upgrade).toBe('HTTP/3.0')
+	})
+})
+
+describe('completeLength', () => {
+	test('RangeNotSatisfiableException sets Content-Range', () => {
+		const ex = new RangeNotSatisfiableException(baseInput, { completeLength: 1024 })
+		expect(ex.headers['Content-Range']).toBe('bytes */1024')
+	})
+
+	test('rejects negative or fractional lengths', () => {
+		expect(() => new RangeNotSatisfiableException(baseInput, { completeLength: -1 })).toThrow(
+			RangeError,
+		)
+		expect(() => new RangeNotSatisfiableException(baseInput, { completeLength: 1.5 })).toThrow(
+			RangeError,
+		)
 	})
 })

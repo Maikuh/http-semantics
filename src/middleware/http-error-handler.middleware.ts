@@ -8,7 +8,7 @@ import { PROBLEM_JSON_CONTENT_TYPE } from '../types/problem-json.constant'
  * `detail` defaults to the `InternalServerErrorException` one.
  */
 function fallbackException(detail: string | undefined): HttpException {
-	return new InternalServerErrorException({ type: 'about:blank', instance: '', detail })
+	return new InternalServerErrorException({ type: 'about:blank', detail })
 }
 
 // ─── Express ────────────────────────────────────────────────────────────────

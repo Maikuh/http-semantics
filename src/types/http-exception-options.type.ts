@@ -75,3 +75,17 @@ export type UpgradeRequiredOptions = HttpExceptionOptions & {
 	 */
 	upgrade?: readonly string[]
 }
+
+/**
+ * Options for 416 Range Not Satisfiable.
+ */
+export type RangeNotSatisfiableOptions = HttpExceptionOptions & {
+	/**
+	 * Current length of the selected representation in bytes. Sets an unsatisfied-range
+	 * `Content-Range` header carrying this length (e.g. `bytes`, `*`, `/1024`), which RFC 9110
+	 * recommends on 416 responses to byte-range requests.
+	 *
+	 * @see https://www.rfc-editor.org/rfc/rfc9110#section-15.5.17
+	 */
+	completeLength?: number
+}

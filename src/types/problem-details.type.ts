@@ -26,9 +26,10 @@ type ProblemDetailsBase = {
 	detail: string
 	/**
 	 * A URI reference that identifies the specific occurrence of the problem.
-	 * It may or may not yield further information if dereferenced.
+	 * It may or may not yield further information if dereferenced. Optional, and omitted from the
+	 * serialized problem details when not provided.
 	 */
-	instance: string
+	instance?: string
 }
 
 /**
@@ -46,9 +47,9 @@ export type ProblemDetails<TExtensions extends Record<string, unknown> = Record<
 	ProblemDetailsBase & TExtensions
 
 /**
- * Used by named exception constructors. `type` and `instance` are required because they are
- * intended to be unique per problem occurrence; `title` and `detail` have sensible defaults and
- * `status` is always set by the exception class itself.
+ * Used by named exception constructors. `type` is required because it identifies the problem
+ * type; `instance` is optional; `title` and `detail` have sensible defaults and `status` is
+ * always set by the exception class itself.
  *
  * Extension members declared through `TExtensions` keep their own optionality.
  */
