@@ -1,6 +1,6 @@
 {
 	"name": "http-semantics",
-	"version": "0.3.0",
+	"version": "0.4.0",
 	"description": "HTTP exceptions and status codes based on RFC 9110, RFC 9457 and RFC 6585 to aid in building RESTful APIs.",
 	"keywords": [
 		"http",
