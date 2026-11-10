@@ -50,6 +50,7 @@
 	"scripts": {
 		"build": "tsdown",
 		"postbuild": "find dist -type f -empty -delete",
+		"check:package": "publint && attw --pack . --profile esm-only && node scripts/smoke-test.js",
 		"test": "bun test",
 		"typecheck": "tsc",
 		"lint": "oxlint",
@@ -58,10 +59,11 @@
 		"format:check": "oxfmt --check",
 		"check": "bun run format:check && bun run lint && bun run typecheck && bun test",
 		"preversion": "bun run check",
-		"prepublishOnly": "bun run check && bun run build",
+		"prepublishOnly": "bun run check && bun run build && bun run check:package",
 		"postversion": "git push --follow-tags"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@types/bun": "^1.4.4",
 		"@types/express": "^5",
 		"express": "^5.3",
@@ -70,6 +72,7 @@
 		"oxfmt": "^0.77.0",
 		"oxlint": "^1.92.0",
 		"oxlint-tsgolint": "^7.0.2006",
+		"publint": "^0.3.25",
 		"tsdown": "^0.23.7",
 		"typescript": "^7.0.2"
 	}

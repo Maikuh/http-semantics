@@ -28,3 +28,26 @@ jobs:
         run: bun test
       - name: Build
         run: bun run build
+
+  package:
+    name: package (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20, 22, 24]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Install bun
+        uses: oven-sh/setup-bun@v2
+      - name: Install node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install dependencies
+        run: bun ci
+      - name: Build
+        run: bun run build
+      # publint, arethetypeswrong and a Node.js import/require smoke test of `dist`
+      - name: Check package
+        run: bun run check:package
